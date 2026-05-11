@@ -17,3 +17,6 @@ export const historic = signal<HistoricData | null>(null);
 
 export const positionFromUrl = signal<boolean>(false);
 export const timeFromUrl = signal<boolean>(false);
+
+/** Debug-only override of START_2026_MS via `?start=ISO8601`. null = use the configured constant. */
+export const startOverrideMs = signal<number | null>(null);

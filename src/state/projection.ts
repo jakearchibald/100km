@@ -10,6 +10,7 @@ import {
   historic,
   nowMs,
   positionFromUrl,
+  startOverrideMs,
   timeFromUrl,
   urlSnapshot,
 } from './signals.ts';
@@ -39,9 +40,10 @@ export const currentTimeMs: ReadonlySignal<number> = computed(() => {
   return nowMs.value;
 });
 
-export const elapsedFrom2026Sec: ReadonlySignal<number> = computed(
-  () => (currentTimeMs.value - START_2026_MS) / 1000,
-);
+export const elapsedFrom2026Sec: ReadonlySignal<number> = computed(() => {
+  const start = startOverrideMs.value ?? START_2026_MS;
+  return (currentTimeMs.value - start) / 1000;
+});
 
 export const routeProjection: ReadonlySignal<Projection | null> = computed(() => {
   const p = currentPosition.value;
