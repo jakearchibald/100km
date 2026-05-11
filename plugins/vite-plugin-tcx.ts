@@ -2,8 +2,21 @@ import { readFile } from 'node:fs/promises';
 import type { Plugin } from 'vite';
 import { XMLParser } from 'fast-xml-parser';
 import type { HistoricPoint, YearTrack } from '../src/types.ts';
+import { makeEquirect, toXY } from '../src/geo/distance.ts';
 
 const RESAMPLE_SEC = 10;
+
+interface FinishClamp {
+  lat: number;
+  lon: number;
+  radiusM: number;
+}
+
+// Per-year hand-coded finish clamps. Some recordings were left running past the
+// real finish; stop emitting points once we get within radiusM of the target.
+const FINISH_CLAMPS: Record<number, FinishClamp> = {
+  2021: { lat: 50.829655377010624, lon: -0.11198652838670355, radiusM: 15 },
+};
 
 interface RawTrackpoint {
   Time?: string;
@@ -38,12 +51,17 @@ function buildYearTrack(parsed: RawTcx, year: number): YearTrack {
   const trackpoints: RawTrackpoint[] = [];
   for (const lap of laps) trackpoints.push(...asArray(lap.Track.Trackpoint));
 
+  const clamp = FINISH_CLAMPS[year];
+  const clampEq = clamp ? makeEquirect(clamp.lat, clamp.lon) : null;
+  const clampR2 = clamp ? clamp.radiusM * clamp.radiusM : 0;
+
   const points: HistoricPoint[] = [];
   let lastDist = 0;
   let lastEmittedSec = -Infinity;
   let startMs: number | null = null;
   let maxDist = 0;
   let lastPoint: HistoricPoint | null = null;
+  let clampHit = false;
 
   for (const tp of trackpoints) {
     if (!tp.Time) continue;
@@ -59,7 +77,8 @@ function buildYearTrack(parsed: RawTcx, year: number): YearTrack {
       }
     }
 
-    if (!tp.Position?.LatitudeDegrees || !tp.Position.LongitudeDegrees) continue;
+    if (!tp.Position?.LatitudeDegrees || !tp.Position.LongitudeDegrees)
+      continue;
     const lat = parseFloat(tp.Position.LatitudeDegrees);
     const lon = parseFloat(tp.Position.LongitudeDegrees);
     if (!Number.isFinite(lat) || !Number.isFinite(lon)) continue;
@@ -71,9 +90,25 @@ function buildYearTrack(parsed: RawTcx, year: number): YearTrack {
       points.push(point);
       lastEmittedSec = tSec;
     }
+
+    if (clamp && clampEq) {
+      const [dx, dy] = toXY(clampEq, lat, lon);
+      if (dx * dx + dy * dy <= clampR2) {
+        if (points.length === 0 || points[points.length - 1].t !== point.t) {
+          points.push(point);
+        }
+        maxDist = lastDist;
+        clampHit = true;
+        break;
+      }
+    }
   }
 
-  if (lastPoint && (points.length === 0 || points[points.length - 1].t !== lastPoint.t)) {
+  if (
+    !clampHit &&
+    lastPoint &&
+    (points.length === 0 || points[points.length - 1].t !== lastPoint.t)
+  ) {
     points.push(lastPoint);
   }
 
@@ -99,7 +134,10 @@ function yearFromId(id: string): number {
 }
 
 export default function viteTcxPlugin(): Plugin {
-  const parser = new XMLParser({ ignoreAttributes: false, parseTagValue: false });
+  const parser = new XMLParser({
+    ignoreAttributes: false,
+    parseTagValue: false,
+  });
   return {
     name: 'vite-plugin-tcx',
     async load(id) {
