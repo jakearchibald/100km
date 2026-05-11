@@ -59,7 +59,13 @@ export const progress2026: ReadonlySignal<number | null> = computed(() => {
 function historicAt(year: 'y21' | 'y22'): HistoricPoint | null {
   const h = historic.value;
   if (!h) return null;
-  return lookupByTOffset(h[year].points, elapsedFrom2026Sec.value);
+  const points = h[year].points;
+  if (points.length === 0) return null;
+  const tSec = elapsedFrom2026Sec.value;
+  const first = points[0].t;
+  const last = points[points.length - 1].t;
+  const clamped = tSec < first ? first : tSec > last ? last : tSec;
+  return lookupByTOffset(points, clamped);
 }
 
 export const historic2021AtElapsed: ReadonlySignal<HistoricPoint | null> = computed(() =>
@@ -71,14 +77,10 @@ export const historic2022AtElapsed: ReadonlySignal<HistoricPoint | null> = compu
 
 function progressFor(year: 'y21' | 'y22', point: HistoricPoint | null): number | null {
   const h = historic.value;
-  if (!h) return null;
+  if (!h || !point) return null;
   const total = h[year].totalDistanceM;
   if (total <= 0) return null;
-  if (point) return point.d / total;
-  const points = h[year].points;
-  if (points.length === 0) return null;
-  if (elapsedFrom2026Sec.value >= points[points.length - 1].t) return 1;
-  return null;
+  return point.d / total;
 }
 
 export const progress2021 = computed(() => progressFor('y21', historic2021AtElapsed.value));
