@@ -1,4 +1,5 @@
 import { useEffect } from 'preact/hooks';
+import { LocationButton } from './components/LocationButton/LocationButton.tsx';
 import { Map } from './components/Map/Map.tsx';
 import { Overlay } from './components/Overlay/Overlay.tsx';
 import { ShareButton } from './components/ShareButton/ShareButton.tsx';
@@ -27,6 +28,7 @@ function App() {
       <Map />
       <Overlay />
       <ShareButton />
+      <LocationButton />
     </>
   );
 }

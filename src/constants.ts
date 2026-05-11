@@ -4,4 +4,4 @@ export const COLORS = {
   y2026: '#43a047',
 } as const;
 
-export const TILE_STYLE = `https://api.maptiler.com/maps/outdoor-v2/style.json?key=${import.meta.env.VITE_MAPTILER_KEY}`;
+export const TILE_STYLE = `https://api.maptiler.com/maps/topo-v2/style.json?key=${import.meta.env.VITE_MAPTILER_KEY}`;

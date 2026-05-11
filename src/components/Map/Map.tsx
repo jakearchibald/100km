@@ -11,6 +11,12 @@ import {
   route,
 } from '../../state/projection.ts';
 import { historic } from '../../state/signals.ts';
+import {
+  flyRequestId,
+  flyTarget,
+  readViewport,
+  writeViewport,
+} from '../../state/viewport.ts';
 import type { YearTrack } from '../../types.ts';
 import styles from './Map.module.css';
 
@@ -61,11 +67,12 @@ export function Map() {
 
   useEffect(() => {
     if (!containerRef.current) return;
+    const stored = readViewport();
     const map = new maplibregl.Map({
       container: containerRef.current,
       style: TILE_STYLE,
-      center: [route.midLon, route.midLat],
-      zoom: 9,
+      center: stored ? [stored.lon, stored.lat] : [route.midLon, route.midLat],
+      zoom: stored ? stored.zoom : 9,
       attributionControl: { compact: true },
       dragRotate: false,
       pitchWithRotate: false,
@@ -74,6 +81,12 @@ export function Map() {
     });
     map.touchZoomRotate.disableRotation();
     map.keyboard.disableRotation();
+
+    const onMoveEnd = () => {
+      const c = map.getCenter();
+      writeViewport({ lat: c.lat, lon: c.lng, zoom: map.getZoom() });
+    };
+    map.on('moveend', onMoveEnd);
 
     const userMarker = new maplibregl.Marker({ element: makeDot(styles.userMarker, '') });
     const marker21 = new maplibregl.Marker({
@@ -157,7 +170,9 @@ export function Map() {
       });
       disposers.push(() => waypointPopup.remove());
 
-      map.fitBounds(routeBounds(), { padding: 40, duration: 0 });
+      if (!stored) {
+        map.fitBounds(routeBounds(), { padding: 40, duration: 0 });
+      }
 
       disposers.push(
         effect(() => {
@@ -192,11 +207,24 @@ export function Map() {
           }
           marker22.setLngLat([h.lon, h.lat]).addTo(map);
         }),
+        effect(() => {
+          // Subscribe to the bump so each request re-fires even with the same target.
+          flyRequestId.value;
+          const t = flyTarget.peek();
+          if (!t) return;
+          map.flyTo({
+            center: [t.lon, t.lat],
+            zoom: t.zoom ?? Math.max(map.getZoom(), 14),
+            duration: 800,
+            essential: true,
+          });
+        }),
       );
     });
 
     return () => {
       for (const dispose of disposers) dispose();
+      map.off('moveend', onMoveEnd);
       userMarker.remove();
       marker21.remove();
       marker22.remove();
