@@ -9,6 +9,12 @@ import serviceWorker from './plugins/vite-plugin-service-worker.ts';
 const enableStats = process.env.STATS === '1';
 
 export default defineConfig({
+  // Rolldown's default minifier mangles maplibre-gl's webworker source, producing
+  // a "ReferenceError: on is not defined" inside the worker blob at runtime. esbuild
+  // handles maplibre cleanly.
+  build: {
+    minify: 'esbuild',
+  },
   plugins: [
     tcx(),
     kmz(),
