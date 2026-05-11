@@ -67,7 +67,13 @@ export function Map() {
       center: [route.midLon, route.midLat],
       zoom: 9,
       attributionControl: { compact: true },
+      dragRotate: false,
+      pitchWithRotate: false,
+      rollEnabled: false,
+      touchZoomRotate: true,
     });
+    map.touchZoomRotate.disableRotation();
+    map.keyboard.disableRotation();
 
     const userMarker = new maplibregl.Marker({ element: makeDot(styles.userMarker, '') });
     const marker21 = new maplibregl.Marker({
