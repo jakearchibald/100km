@@ -1,0 +1,7 @@
+node_modules/
+.vscode
+.wrangler
+public/index.html
+dist
+.dev.vars
+.DS_Store
