@@ -9,7 +9,7 @@
     "build:stats": "STATS=1 vite build",
     "lint": "eslint .",
     "preview": "npm run build && vite preview",
-    "deploy": "npm run build && wrangler deploy --config dist/wrangler.json"
+    "deploy": "npm run build && wrangler deploy"
   },
   "devDependencies": {
     "@cloudflare/vite-plugin": "^1.36.3",
@@ -24,5 +24,12 @@
     "typescript": "~6.0.2",
     "vite": "^8.0.10",
     "wrangler": "^4.90.0"
+  },
+  "pnpm": {
+    "onlyBuiltDependencies": [
+      "esbuild",
+      "sharp",
+      "workerd"
+    ]
   }
 }
