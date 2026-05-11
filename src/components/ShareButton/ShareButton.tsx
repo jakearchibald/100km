@@ -1,7 +1,7 @@
 import { computed, signal } from '@preact/signals';
 import { buildShareUrl, share } from '../../share/share.ts';
 import { currentPosition, currentTimeMs } from '../../state/projection.ts';
-import shareIcon from './imgs/share.svg';
+import shareIcon from './imgs/share.svg?raw';
 import styles from './ShareButton.module.css';
 
 const toast = signal<string>('');
@@ -41,7 +41,11 @@ export function ShareButton() {
         onClick={onClick}
         aria-label="Share my progress"
       >
-        <img src={shareIcon} alt="" className={styles.icon} />
+        <span
+          className={styles.icon}
+          aria-hidden="true"
+          dangerouslySetInnerHTML={{ __html: shareIcon }}
+        />
       </button>
       <div className={toastClass} role="status" aria-live="polite">
         {toast}
