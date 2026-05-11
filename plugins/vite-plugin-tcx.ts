@@ -77,6 +77,13 @@ function buildYearTrack(parsed: RawTcx, year: number): YearTrack {
     points.push(lastPoint);
   }
 
+  // Anchor the first emitted point at t=0, d=0 so "elapsed time from start"
+  // doesn't include the GPS-acquisition delay between the activity's official
+  // start (Activity.Id) and the first usable trackpoint.
+  if (points.length > 0) {
+    points[0] = { ...points[0], t: 0, d: 0 };
+  }
+
   return {
     year,
     startMs: startMs ?? 0,
