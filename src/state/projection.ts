@@ -92,7 +92,11 @@ function deltaFor(year: 'y21' | 'y22'): number | null {
   const h = historic.value;
   const proj = routeProjection.value;
   if (!h || !proj) return null;
-  const t = tAtDistance(h[year].points, proj.distM);
+  // The historic year's TCX distance is longer than the 2026 route because of GPS noise.
+  // Scale the user's route distance into the historic year's distance space so the lookup
+  // compares like with like (proportionally far through, not metres-on-different-rulers).
+  const scale = h[year].totalDistanceM / route.totalDistanceM;
+  const t = tAtDistance(h[year].points, proj.distM * scale);
   if (t === null) return null;
   return t - elapsedFrom2026Sec.value;
 }
