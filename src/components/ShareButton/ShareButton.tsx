@@ -1,6 +1,7 @@
-import { signal } from '@preact/signals';
+import { computed, signal } from '@preact/signals';
 import { buildShareUrl, share } from '../../share/share.ts';
 import { currentPosition, currentTimeMs } from '../../state/projection.ts';
+import shareIcon from './imgs/share.svg';
 import styles from './ShareButton.module.css';
 
 const toast = signal<string>('');
@@ -27,13 +28,24 @@ async function onClick() {
   }
 }
 
+const toastClass = computed(() =>
+  toast.value ? `${styles.toast} ${styles.toastVisible}` : styles.toast,
+);
+
 export function ShareButton() {
   return (
     <>
-      <button className={styles.button} type="button" onClick={onClick}>
-        Share my progress
+      <button
+        className={styles.button}
+        type="button"
+        onClick={onClick}
+        aria-label="Share my progress"
+      >
+        <img src={shareIcon} alt="" className={styles.icon} />
       </button>
-      <div className={styles.toast}>{toast}</div>
+      <div className={toastClass} role="status" aria-live="polite">
+        {toast}
+      </div>
     </>
   );
 }

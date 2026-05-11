@@ -71,9 +71,14 @@ export const historic2022AtElapsed: ReadonlySignal<HistoricPoint | null> = compu
 
 function progressFor(year: 'y21' | 'y22', point: HistoricPoint | null): number | null {
   const h = historic.value;
-  if (!h || !point) return null;
+  if (!h) return null;
   const total = h[year].totalDistanceM;
-  return total > 0 ? point.d / total : null;
+  if (total <= 0) return null;
+  if (point) return point.d / total;
+  const points = h[year].points;
+  if (points.length === 0) return null;
+  if (elapsedFrom2026Sec.value >= points[points.length - 1].t) return 1;
+  return null;
 }
 
 export const progress2021 = computed(() => progressFor('y21', historic2021AtElapsed.value));

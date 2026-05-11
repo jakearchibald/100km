@@ -114,6 +114,42 @@ export function Map() {
           'line-opacity': 0.9,
         },
       });
+      map.addLayer({
+        id: 'route-2026-waypoint-dot',
+        type: 'circle',
+        source: 'route-2026',
+        filter: ['==', ['get', 'kind'], 'waypoint'],
+        paint: {
+          'circle-radius': 7,
+          'circle-color': '#ffffff',
+          'circle-stroke-color': COLORS.y2026,
+          'circle-stroke-width': 2,
+        },
+      });
+
+      const waypointPopup = new maplibregl.Popup({
+        closeButton: false,
+        closeOnClick: true,
+        offset: 12,
+      });
+
+      map.on('click', 'route-2026-waypoint-dot', (e) => {
+        const feature = e.features?.[0];
+        if (!feature || feature.geometry.type !== 'Point') return;
+        const [lon, lat] = feature.geometry.coordinates as [number, number];
+        const name = (feature.properties?.name as string | undefined) ?? '';
+        waypointPopup
+          .setLngLat([lon, lat])
+          .setText(name)
+          .addTo(map);
+      });
+      map.on('mouseenter', 'route-2026-waypoint-dot', () => {
+        map.getCanvas().style.cursor = 'pointer';
+      });
+      map.on('mouseleave', 'route-2026-waypoint-dot', () => {
+        map.getCanvas().style.cursor = '';
+      });
+      disposers.push(() => waypointPopup.remove());
 
       map.fitBounds(routeBounds(), { padding: 40, duration: 0 });
 

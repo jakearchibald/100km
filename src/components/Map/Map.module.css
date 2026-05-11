@@ -24,3 +24,32 @@
 .maplibre :global(.maplibregl-ctrl-attrib) {
   font-size: 10px;
 }
+
+.maplibre :global(.maplibregl-popup-content) {
+  background: #1a1a1a;
+  color: #fff;
+  border-radius: 6px;
+  padding: 0.4rem 0.7rem;
+  font-size: 0.85rem;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.5);
+}
+
+.maplibre :global(.maplibregl-popup-anchor-top .maplibregl-popup-tip),
+.maplibre :global(.maplibregl-popup-anchor-top-left .maplibregl-popup-tip),
+.maplibre :global(.maplibregl-popup-anchor-top-right .maplibregl-popup-tip) {
+  border-bottom-color: #1a1a1a;
+}
+
+.maplibre :global(.maplibregl-popup-anchor-bottom .maplibregl-popup-tip),
+.maplibre :global(.maplibregl-popup-anchor-bottom-left .maplibregl-popup-tip),
+.maplibre :global(.maplibregl-popup-anchor-bottom-right .maplibregl-popup-tip) {
+  border-top-color: #1a1a1a;
+}
+
+.maplibre :global(.maplibregl-popup-anchor-left .maplibregl-popup-tip) {
+  border-right-color: #1a1a1a;
+}
+
+.maplibre :global(.maplibregl-popup-anchor-right .maplibregl-popup-tip) {
+  border-left-color: #1a1a1a;
+}

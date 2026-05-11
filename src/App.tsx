@@ -1,21 +1,12 @@
-import { computed, signal } from '@preact/signals';
 import { useEffect } from 'preact/hooks';
 import { Map } from './components/Map/Map.tsx';
 import { Overlay } from './components/Overlay/Overlay.tsx';
-import { Spinner } from './components/Spinner/Spinner.tsx';
+import { ShareButton } from './components/ShareButton/ShareButton.tsx';
 import { loadHistoric } from './data/historic.ts';
 import './state/mode.ts';
+import { loadError } from './state/loading.ts';
 import { historic } from './state/signals.ts';
 import { initLifecycle } from './state/visibility.ts';
-
-const loadError = signal<string | null>(null);
-
-const overlayOrSpinner = computed(() => {
-  if (loadError.value) {
-    return <Spinner label={`Historic data failed: ${loadError.value}`} />;
-  }
-  return historic.value ? <Overlay /> : <Spinner label="Loading historic tracks…" />;
-});
 
 function App() {
   useEffect(() => {
@@ -34,7 +25,8 @@ function App() {
   return (
     <>
       <Map />
-      {overlayOrSpinner}
+      <Overlay />
+      <ShareButton />
     </>
   );
 }
