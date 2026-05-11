@@ -1,0 +1,29 @@
+.button {
+  display: block;
+  width: 100%;
+  margin-top: 0.75rem;
+  padding: 0.6rem 1rem;
+  border-radius: 8px;
+  background: #ffffff;
+  color: #000;
+  font-weight: 600;
+  font-size: 0.95rem;
+  letter-spacing: 0.02em;
+  transition: opacity 150ms ease, background 150ms ease;
+}
+
+.button[disabled] {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.button:not([disabled]):hover {
+  background: #e8e8e8;
+}
+
+.toast {
+  margin-top: 0.5rem;
+  font-size: 0.8rem;
+  opacity: 0.8;
+  text-align: center;
+}

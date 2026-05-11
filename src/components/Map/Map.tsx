@@ -1,0 +1,166 @@
+import { effect } from '@preact/signals';
+import { useEffect, useRef } from 'preact/hooks';
+import maplibregl, { type LngLatBoundsLike } from 'maplibre-gl';
+import 'maplibre-gl/dist/maplibre-gl.css';
+import type { Feature, LineString } from 'geojson';
+import { COLORS, TILE_STYLE } from '../../constants.ts';
+import {
+  currentPosition,
+  historic2021AtElapsed,
+  historic2022AtElapsed,
+  route,
+} from '../../state/projection.ts';
+import { historic } from '../../state/signals.ts';
+import type { YearTrack } from '../../types.ts';
+import styles from './Map.module.css';
+
+function yearLineString(year: YearTrack): Feature<LineString> {
+  return {
+    type: 'Feature',
+    geometry: {
+      type: 'LineString',
+      coordinates: year.points.map((p) => [p.lon, p.lat]),
+    },
+    properties: { kind: 'historic', year: year.year },
+  };
+}
+
+function routeBounds(): LngLatBoundsLike {
+  const lineFeature = route.geojson.features.find((f) => f.geometry.type === 'LineString');
+  if (!lineFeature || lineFeature.geometry.type !== 'LineString') {
+    return [
+      [route.midLon - 0.3, route.midLat - 0.3],
+      [route.midLon + 0.3, route.midLat + 0.3],
+    ];
+  }
+  let minLon = Infinity;
+  let maxLon = -Infinity;
+  let minLat = Infinity;
+  let maxLat = -Infinity;
+  for (const [lon, lat] of lineFeature.geometry.coordinates) {
+    if (lon < minLon) minLon = lon;
+    if (lon > maxLon) maxLon = lon;
+    if (lat < minLat) minLat = lat;
+    if (lat > maxLat) maxLat = lat;
+  }
+  return [
+    [minLon, minLat],
+    [maxLon, maxLat],
+  ];
+}
+
+function makeDot(className: string, color: string): HTMLDivElement {
+  const el = document.createElement('div');
+  el.className = className;
+  if (color) el.style.background = color;
+  return el;
+}
+
+export function Map() {
+  const containerRef = useRef<HTMLDivElement | null>(null);
+
+  useEffect(() => {
+    if (!containerRef.current) return;
+    const map = new maplibregl.Map({
+      container: containerRef.current,
+      style: TILE_STYLE,
+      center: [route.midLon, route.midLat],
+      zoom: 9,
+      attributionControl: { compact: true },
+    });
+
+    const userMarker = new maplibregl.Marker({ element: makeDot(styles.userMarker, '') });
+    const marker21 = new maplibregl.Marker({
+      element: makeDot(styles.historicMarker, COLORS.y2021),
+    });
+    const marker22 = new maplibregl.Marker({
+      element: makeDot(styles.historicMarker, COLORS.y2022),
+    });
+
+    const disposers: Array<() => void> = [];
+
+    map.on('load', () => {
+      map.addSource('historic-2021', {
+        type: 'geojson',
+        data: { type: 'FeatureCollection', features: [] },
+      });
+      map.addLayer({
+        id: 'historic-2021-line',
+        type: 'line',
+        source: 'historic-2021',
+        paint: { 'line-color': COLORS.y2021, 'line-width': 3, 'line-opacity': 0.85 },
+      });
+
+      map.addSource('historic-2022', {
+        type: 'geojson',
+        data: { type: 'FeatureCollection', features: [] },
+      });
+      map.addLayer({
+        id: 'historic-2022-line',
+        type: 'line',
+        source: 'historic-2022',
+        paint: { 'line-color': COLORS.y2022, 'line-width': 3, 'line-opacity': 0.85 },
+      });
+
+      map.addSource('route-2026', { type: 'geojson', data: route.geojson });
+      map.addLayer({
+        id: 'route-2026-line',
+        type: 'line',
+        source: 'route-2026',
+        filter: ['==', ['get', 'kind'], 'route'],
+        paint: {
+          'line-color': COLORS.y2026,
+          'line-width': 5,
+          'line-opacity': 0.9,
+        },
+      });
+
+      map.fitBounds(routeBounds(), { padding: 40, duration: 0 });
+
+      disposers.push(
+        effect(() => {
+          const data = historic.value;
+          const src21 = map.getSource('historic-2021') as maplibregl.GeoJSONSource | undefined;
+          const src22 = map.getSource('historic-2022') as maplibregl.GeoJSONSource | undefined;
+          if (!data || !src21 || !src22) return;
+          src21.setData({ type: 'FeatureCollection', features: [yearLineString(data.y21)] });
+          src22.setData({ type: 'FeatureCollection', features: [yearLineString(data.y22)] });
+        }),
+        effect(() => {
+          const p = currentPosition.value;
+          if (!p) {
+            userMarker.remove();
+            return;
+          }
+          userMarker.setLngLat([p.lon, p.lat]).addTo(map);
+        }),
+        effect(() => {
+          const h = historic2021AtElapsed.value;
+          if (!h) {
+            marker21.remove();
+            return;
+          }
+          marker21.setLngLat([h.lon, h.lat]).addTo(map);
+        }),
+        effect(() => {
+          const h = historic2022AtElapsed.value;
+          if (!h) {
+            marker22.remove();
+            return;
+          }
+          marker22.setLngLat([h.lon, h.lat]).addTo(map);
+        }),
+      );
+    });
+
+    return () => {
+      for (const dispose of disposers) dispose();
+      userMarker.remove();
+      marker21.remove();
+      marker22.remove();
+      map.remove();
+    };
+  }, []);
+
+  return <div ref={containerRef} className={`${styles.container} ${styles.maplibre}`} />;
+}

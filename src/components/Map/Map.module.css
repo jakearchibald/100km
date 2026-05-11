@@ -1,0 +1,26 @@
+.container {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+}
+
+.userMarker {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: #2196f3;
+  border: 3px solid #fff;
+  box-shadow: 0 0 0 2px rgba(33, 150, 243, 0.4);
+}
+
+.historicMarker {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  border: 2px solid rgba(0, 0, 0, 0.6);
+  box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.6);
+}
+
+.maplibre :global(.maplibregl-ctrl-attrib) {
+  font-size: 10px;
+}

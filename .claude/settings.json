@@ -1,0 +1,9 @@
+{
+  "permissions": {
+    "allow": [
+      "WebSearch",
+      "Bash(curl -sS \"http://127.0.0.1:5173/data/2026.kmz?import\" -o /tmp/route_module.js)",
+      "Read(//tmp/**)"
+    ]
+  }
+}

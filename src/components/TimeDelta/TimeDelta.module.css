@@ -1,0 +1,22 @@
+.row {
+  display: grid;
+  grid-template-columns: 3.5rem 1fr;
+  align-items: baseline;
+  gap: 0.5rem;
+  font-size: 0.9rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.label {
+  font-weight: 600;
+  letter-spacing: 0.02em;
+}
+
+.value {
+  text-align: right;
+  opacity: 0.95;
+}
+
+.ahead { color: #4caf50; }
+.behind { color: #ef5350; }
+.neutral { opacity: 0.5; }
