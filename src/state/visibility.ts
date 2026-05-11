@@ -1,14 +1,35 @@
-import { isVisible, nowMs, positionFromUrl, timeFromUrl } from './signals.ts';
+import {
+  isVisible,
+  nowMs,
+  positionFromUrl,
+  timeFromUrl,
+  timeMult,
+} from './signals.ts';
 import { startWatch, stopWatch } from './geolocation.ts';
 
 let intervalId: number | null = null;
+let baseRealMs = 0;
+let baseSimMs = 0;
+
+function anchor() {
+  baseRealMs = Date.now();
+  baseSimMs = nowMs.value;
+}
+
+function tick() {
+  const mult = timeMult.value;
+  if (mult === 1) {
+    nowMs.value = Date.now();
+    return;
+  }
+  nowMs.value = baseSimMs + (Date.now() - baseRealMs) * mult;
+}
 
 function startTicker() {
   if (timeFromUrl.value) return;
   if (intervalId !== null) return;
-  intervalId = window.setInterval(() => {
-    nowMs.value = Date.now();
-  }, 1000);
+  anchor();
+  intervalId = window.setInterval(tick, 1000);
 }
 
 function stopTicker() {

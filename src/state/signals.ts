@@ -20,3 +20,6 @@ export const timeFromUrl = signal<boolean>(false);
 
 /** Debug-only override of START_2026_MS via `?start=ISO8601`. null = use the configured constant. */
 export const startOverrideMs = signal<number | null>(null);
+
+/** Debug-only time-multiplier via `?timeMult=N`. 1 = real-time. */
+export const timeMult = signal<number>(1);
