@@ -52,6 +52,7 @@ export const routeProjection: ReadonlySignal<Projection | null> = computed(() =>
 });
 
 export const progress2026: ReadonlySignal<number | null> = computed(() => {
+  if (elapsedFrom2026Sec.value < 0) return 0;
   const proj = routeProjection.value;
   if (!proj) return null;
   const pct = proj.distM / route.totalDistanceM;
@@ -78,6 +79,7 @@ export const historic2022AtElapsed: ReadonlySignal<HistoricPoint | null> = compu
 );
 
 function progressFor(year: 'y21' | 'y22', point: HistoricPoint | null): number | null {
+  if (elapsedFrom2026Sec.value < 0) return 0;
   const h = historic.value;
   if (!h || !point) return null;
   const total = h[year].totalDistanceM;
@@ -89,6 +91,7 @@ export const progress2021 = computed(() => progressFor('y21', historic2021AtElap
 export const progress2022 = computed(() => progressFor('y22', historic2022AtElapsed.value));
 
 function deltaFor(year: 'y21' | 'y22'): number | null {
+  if (elapsedFrom2026Sec.value < 0) return null;
   const h = historic.value;
   const proj = routeProjection.value;
   if (!h || !proj) return null;

@@ -9,6 +9,7 @@ import {
   progress2026,
 } from '../../state/projection.ts';
 import { historic } from '../../state/signals.ts';
+import { Clock } from '../Clock/Clock.tsx';
 import { ProgressBar } from '../ProgressBar/ProgressBar.tsx';
 import { TimeDelta } from '../TimeDelta/TimeDelta.tsx';
 import styles from './Overlay.module.css';
@@ -38,6 +39,7 @@ export function Overlay() {
       </div>
       <div className={styles.divider} />
       <div className={styles.section}>
+        <Clock />
         <TimeDelta label="vs '22" color={COLORS.y2022} delta={delta2022Sec} />
         <TimeDelta label="vs '21" color={COLORS.y2021} delta={delta2021Sec} />
       </div>
