@@ -2,9 +2,8 @@ import route from '../src/data/route-2026.ts';
 import historic from '../src/data/historic-chunk.ts';
 import { makeEquirect } from '../src/geo/distance.ts';
 import { projectOntoPolyline, type Projection } from '../src/geo/projection.ts';
-import { lookupByTOffset, tAtDistance } from '../src/geo/search.ts';
+import { tAtDistance } from '../src/geo/search.ts';
 import { START_2026_MS } from '../data-config/start-2026.ts';
-import type { HistoricPoint } from '../src/types.ts';
 
 const eq = makeEquirect(route.midLat, route.midLon);
 const routeCoords =
