@@ -13,7 +13,7 @@ export default {
   async fetch(req: Request, env: Env): Promise<Response> {
     const url = new URL(req.url);
 
-    if (url.pathname === '/og-image.png') {
+    if (url.pathname === '/og-image.jpg') {
       try {
         return await renderOgImage(req, env);
       } catch (err) {

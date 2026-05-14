@@ -61,7 +61,7 @@ export async function injectOgMeta(req: Request, env: Env): Promise<Response> {
   const ct = assetRes.headers.get('content-type') ?? '';
   if (!ct.includes('text/html')) return assetRes;
 
-  const imageUrl = new URL('/og-image.png', req.url);
+  const imageUrl = new URL('/og-image.jpg', req.url);
   imageUrl.searchParams.set('lat', lat.toFixed(6));
   imageUrl.searchParams.set('lon', lon.toFixed(6));
   imageUrl.searchParams.set('t', new Date(tMs).toISOString());

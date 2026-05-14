@@ -15,6 +15,7 @@
   "devDependencies": {
     "@cloudflare/vite-plugin": "^1.36.3",
     "@fontsource/inter": "^5.2.8",
+    "@jsquash/jpeg": "^1.6.0",
     "@preact/preset-vite": "^2.10.5",
     "@preact/signals": "^2.9.0",
     "@resvg/resvg-wasm": "^2.6.2",

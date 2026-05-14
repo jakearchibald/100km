@@ -10,7 +10,7 @@ declare module '*.kmz' {
   export default value;
 }
 
-declare module '@resvg/resvg-wasm/index_bg.wasm' {
+declare module '*.wasm' {
   const wasm: WebAssembly.Module;
   export default wasm;
 }

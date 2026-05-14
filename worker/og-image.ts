@@ -1,5 +1,7 @@
 import { initWasm, Resvg } from '@resvg/resvg-wasm';
 import resvgWasm from '@resvg/resvg-wasm/index_bg.wasm';
+import encodeJpeg, { init as initJpeg } from '@jsquash/jpeg/encode';
+import jpegWasm from '@jsquash/jpeg/codec/enc/mozjpeg_enc.wasm';
 import { bboxOf } from '../src/geo/web-mercator.ts';
 import { computeProjection, routeCoords } from './og-projection.ts';
 import { buildTileGrid } from './tile-grid.ts';
@@ -14,12 +16,18 @@ const TILE_STYLE = 'topo-v2';
 let wasmReady: Promise<void> | null = null;
 function ensureWasm(): Promise<void> {
   if (!wasmReady) {
-    wasmReady = initWasm(resvgWasm as WebAssembly.Module).catch((err) => {
-      // HMR can re-evaluate this module; resvg's wasm init refuses a second call.
-      if (err instanceof Error && err.message.includes('Already initialized'))
-        return;
-      throw err;
-    });
+    wasmReady = Promise.all([
+      initWasm(resvgWasm as WebAssembly.Module).catch((err) => {
+        if (err instanceof Error && err.message.includes('Already initialized'))
+          return;
+        throw err;
+      }),
+      initJpeg(jpegWasm as WebAssembly.Module).catch((err) => {
+        if (err instanceof Error && err.message.includes('Already initialized'))
+          return;
+        throw err;
+      }),
+    ]).then(() => undefined);
   }
   return wasmReady;
 }
@@ -60,11 +68,20 @@ export interface DeltaInfo {
 }
 
 function formatDelta(deltaSec: number | null): DeltaInfo {
-  if (deltaSec === null) return { text: '—', label: 'vs 2022', kind: 'neutral' };
+  if (deltaSec === null)
+    return { text: '—', label: 'vs 2022', kind: 'neutral' };
   if (deltaSec >= 0) {
-    return { text: formatDuration(deltaSec), label: 'Ahead of 2022', kind: 'ahead' };
+    return {
+      text: formatDuration(deltaSec),
+      label: 'Ahead of 2022',
+      kind: 'ahead',
+    };
   }
-  return { text: formatDuration(-deltaSec), label: 'Behind 2022', kind: 'behind' };
+  return {
+    text: formatDuration(-deltaSec),
+    label: 'Behind 2022',
+    kind: 'behind',
+  };
 }
 
 function bufferToBase64(buf: Uint8Array): string {
@@ -150,16 +167,20 @@ export async function renderOgImage(req: Request, env: Env): Promise<Response> {
     },
   });
 
-  const png = resvg.render().asPng();
-  // Avoid lib types fighting over Uint8Array<ArrayBufferLike>; explicit slice gives a fresh ArrayBuffer.
-  const body = png.buffer.slice(
-    png.byteOffset,
-    png.byteOffset + png.byteLength,
-  ) as ArrayBuffer;
+  const rendered = resvg.render();
+  const body = await encodeJpeg(
+    {
+      data: new Uint8ClampedArray(rendered.pixels),
+      width: rendered.width,
+      height: rendered.height,
+      colorSpace: 'srgb',
+    },
+    { quality: 60 },
+  );
 
   return new Response(body, {
     headers: {
-      'Content-Type': 'image/png',
+      'Content-Type': 'image/jpeg',
       'Cache-Control': 'public, max-age=300, s-maxage=86400',
     },
   });
