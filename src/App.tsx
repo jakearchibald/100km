@@ -6,7 +6,7 @@ import { ShareButton } from './components/ShareButton/ShareButton.tsx';
 import { loadHistoric } from './data/historic.ts';
 import './state/mode.ts';
 import { loadError } from './state/loading.ts';
-import { historic } from './state/signals.ts';
+import { historic, positionFromUrl } from './state/signals.ts';
 import { initLifecycle } from './state/visibility.ts';
 
 function App() {
@@ -28,7 +28,7 @@ function App() {
       <Map />
       <Overlay />
       <ShareButton />
-      <LocationButton />
+      {!positionFromUrl.value && <LocationButton />}
     </>
   );
 }
