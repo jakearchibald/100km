@@ -9,12 +9,15 @@
     "build:stats": "STATS=1 vite build",
     "lint": "eslint .",
     "preview": "npm run build && vite preview",
-    "deploy": "npm run build && wrangler deploy"
+    "deploy": "npm run build && wrangler deploy",
+    "cf-typegen": "wrangler types"
   },
   "devDependencies": {
     "@cloudflare/vite-plugin": "^1.36.3",
+    "@fontsource/inter": "^5.2.8",
     "@preact/preset-vite": "^2.10.5",
     "@preact/signals": "^2.9.0",
+    "@resvg/resvg-wasm": "^2.6.2",
     "@types/geojson": "^7946.0.16",
     "@types/node": "^24.12.3",
     "fast-xml-parser": "^5.7.3",

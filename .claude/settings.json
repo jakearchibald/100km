@@ -3,7 +3,21 @@
     "allow": [
       "WebSearch",
       "Bash(curl -sS \"http://127.0.0.1:5173/data/2026.kmz?import\" -o /tmp/route_module.js)",
-      "Read(//tmp/**)"
+      "Read(//tmp/**)",
+      "Bash(unzip -p /Users/jarchibald/dev/100km/data/2026.kmz doc.kml)",
+      "Bash(xargs -I{} ls -la {})",
+      "WebFetch(domain:docs.maptiler.com)",
+      "WebFetch(domain:api.maptiler.com)",
+      "Bash(pnpm exec *)",
+      "Bash(curl -s \"http://localhost:5174/og-image.png?lat=51.3&lon=-0.15&t=2026-05-23T11:00:00Z\" -o /tmp/og1.png)",
+      "Bash(open /tmp/og1.png)",
+      "Bash(curl -s \"http://localhost:5174/?lat=51.3&lon=-0.15&t=2026-05-23T11:00:00Z\")",
+      "Bash(curl -sv \"http://localhost:5174/?lat=51.3&lon=-0.15&t=2026-05-23T11:00:00Z\")",
+      "Bash(curl -s \"http://localhost:5174/?lat=51.3&lon=-0.15&t=2026-05-23T11:00:00Z\" -D /tmp/headers.txt -o /tmp/body.html)",
+      "Bash(curl -s \"http://localhost:5174/og-image.png?lat=51.3&lon=-0.15&t=2026-05-23T11:00:00Z\" -o /tmp/og2.png)",
+      "Bash(pnpm preview *)",
+      "Bash(curl -sI \"http://localhost:4173/og-image.png?lat=51.3&lon=-0.15&t=2026-05-23T11:00:00Z\")",
+      "Bash(curl -s \"http://localhost:4173/?lat=51.3&lon=-0.15&t=2026-05-23T11:00:00Z\")"
     ]
   }
 }
