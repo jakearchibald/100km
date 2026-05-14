@@ -149,8 +149,6 @@ export async function renderOgImage(req: Request, env: Env): Promise<Response> {
     tileDataUrls,
     fullRouteCoords: routeCoords,
     doneCoords: proj.doneCoords,
-    userPos: { lon, lat },
-    historic2022Pos: proj.historic2022,
     pctText: formatPct(proj.pctComplete),
     walkingTimeText: formatDuration(proj.elapsedSec),
     delta: formatDelta(proj.delta2022Sec),
@@ -175,7 +173,7 @@ export async function renderOgImage(req: Request, env: Env): Promise<Response> {
       height: rendered.height,
       colorSpace: 'srgb',
     },
-    { quality: 60 },
+    { quality: 60, auto_subsample: false, chroma_subsample: 1 },
   );
 
   return new Response(body, {

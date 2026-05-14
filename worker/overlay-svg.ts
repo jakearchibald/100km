@@ -28,8 +28,6 @@ export interface OverlayInput {
   tileDataUrls: readonly string[];
   fullRouteCoords: readonly (readonly [number, number])[];
   doneCoords: readonly (readonly [number, number])[];
-  userPos: { lon: number; lat: number };
-  historic2022Pos: { lon: number; lat: number } | null;
   pctText: string;
   walkingTimeText: string;
   delta: DeltaInfo;
@@ -57,20 +55,6 @@ function coordsToPath(
   return d;
 }
 
-function marker(
-  grid: TileGrid,
-  lon: number,
-  lat: number,
-  fill: string,
-  r = 16,
-): string {
-  const { x, y } = grid.toPixel(lon, lat);
-  return (
-    `<circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="${r + 4}" fill="#ffffff"/>` +
-    `<circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="${r}" fill="${fill}"/>`
-  );
-}
-
 function escapeXml(s: string): string {
   return s
     .replace(/&/g, '&amp;')
@@ -91,7 +75,12 @@ function statsPanel(
   const blockSpacing = 168;
   const baseY = (height - blockSpacing * 2) / 2 + 20;
 
-  function block(y: number, value: string, label: string, valueColor = COLORS.textPrimary): string {
+  function block(
+    y: number,
+    value: string,
+    label: string,
+    valueColor = COLORS.textPrimary,
+  ): string {
     return (
       `<text x="${x0 + padX}" y="${y}" font-size="86" font-weight="700" fill="${valueColor}" font-family="Inter, sans-serif">${escapeXml(value)}</text>` +
       `<text x="${x0 + padX}" y="${y + 38}" font-size="26" fill="${COLORS.textSecondary}" font-family="Inter, sans-serif" letter-spacing="2">${escapeXml(label.toUpperCase())}</text>`
@@ -102,7 +91,12 @@ function statsPanel(
     `<rect x="${x0}" y="0" width="${w}" height="${height}" fill="${COLORS.panelBg}"/>` +
     block(baseY, pct, 'complete') +
     block(baseY + blockSpacing, time, 'walking') +
-    block(baseY + blockSpacing * 2, delta.text, delta.label, deltaColor(delta.kind))
+    block(
+      baseY + blockSpacing * 2,
+      delta.text,
+      delta.label,
+      deltaColor(delta.kind),
+    )
   );
 }
 
@@ -114,8 +108,6 @@ export function buildOverlaySvg(input: OverlayInput): string {
     tileDataUrls,
     fullRouteCoords,
     doneCoords,
-    userPos,
-    historic2022Pos,
     pctText,
     walkingTimeText,
     delta,
@@ -124,26 +116,13 @@ export function buildOverlaySvg(input: OverlayInput): string {
   const fullPath = coordsToPath(grid, fullRouteCoords);
   const donePath = coordsToPath(grid, doneCoords);
 
-  const historicMarker = historic2022Pos
-    ? marker(
-        grid,
-        historic2022Pos.lon,
-        historic2022Pos.lat,
-        COLORS.historic2022,
-        10,
-      )
-    : '';
-  const userMarker = marker(grid, userPos.lon, userPos.lat, COLORS.user, 10);
-
   return (
     `<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}" viewBox="0 0 ${width} ${height}">` +
     `<rect width="${width}" height="${height}" fill="#cfe1c8"/>` +
     tilesToSvg(grid, tileDataUrls) +
-    `<path d="${fullPath}" stroke="#ffffff" stroke-width="10" stroke-linejoin="round" stroke-linecap="round" fill="none" opacity="0.6"/>` +
-    `<path d="${fullPath}" stroke="${COLORS.routeDim}" stroke-width="6" stroke-linejoin="round" stroke-linecap="round" fill="none"/>` +
-    `<path d="${donePath}" stroke="${COLORS.routeDone}" stroke-width="6" stroke-linejoin="round" stroke-linecap="round" fill="none"/>` +
-    historicMarker +
-    userMarker +
+    `<path d="${fullPath}" stroke="#ffffff" stroke-width="30" stroke-linejoin="round" stroke-linecap="round" fill="none" opacity="0.8"/>` +
+    `<path d="${fullPath}" stroke="${COLORS.routeDim}" stroke-width="8" stroke-linejoin="round" stroke-linecap="round" fill="none"/>` +
+    `<path d="${donePath}" stroke="${COLORS.routeDone}" stroke-width="8" stroke-linejoin="round" stroke-linecap="round" fill="none"/>` +
     statsPanel(height, pctText, walkingTimeText, delta) +
     `</svg>`
   );

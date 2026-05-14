@@ -35,9 +35,9 @@ interface BuildOptions {
 export function buildTileGrid({ bbox, width, height, padding, style, maptilerKey, centerAt, fitWidth, fitHeight }: BuildOptions): TileGrid {
   // Pick a fractional zoom that fits the bbox exactly in the usable area.
   const zFloat = exactFitZoom(bbox, fitWidth ?? width, fitHeight ?? height, padding);
-  // Fetch tiles at the nearest higher integer zoom so they shrink (sharper) rather than stretch.
-  const zTile = Math.min(18, Math.max(0, Math.ceil(zFloat)));
-  // Scale factor applied to tiles when placing them on the canvas.
+  // @2x tiles are 512px covering the same ground as a 256px tile one zoom higher,
+  // so fetch at ceil(zFloat) - 1 to get equivalent sharpness with 1/4 the requests.
+  const zTile = Math.min(18, Math.max(0, Math.ceil(zFloat) - 1));
   const tileScale = 2 ** (zFloat - zTile);
   const renderedTileSize = TILE_SIZE * tileScale;
 
@@ -51,14 +51,14 @@ export function buildTileGrid({ bbox, width, height, padding, style, maptilerKey
   // Origin in "placement" world pixels (at zFloat scale).
   const originWorldX = centerWorldX - targetX;
   const originWorldY = centerWorldY - targetY;
-  // Origin in tile-coordinate space (at zTile scale).
-  const originTileX = originWorldX / tileScale;
-  const originTileY = originWorldY / tileScale;
+  // Tile coordinates address the same ground area whether @1x or @2x; only the
+  // rendered pixel size differs. Stride in placement (zFloat) pixels:
+  const tileStride = TILE_SIZE * tileScale;
 
-  const minTileX = Math.floor(originTileX / TILE_SIZE);
-  const minTileY = Math.floor(originTileY / TILE_SIZE);
-  const maxTileX = Math.floor((originTileX + width / tileScale) / TILE_SIZE);
-  const maxTileY = Math.floor((originTileY + height / tileScale) / TILE_SIZE);
+  const minTileX = Math.floor(originWorldX / tileStride);
+  const minTileY = Math.floor(originWorldY / tileStride);
+  const maxTileX = Math.floor((originWorldX + width) / tileStride);
+  const maxTileY = Math.floor((originWorldY + height) / tileStride);
 
   const tiles: TileSpec[] = [];
   for (let ty = minTileY; ty <= maxTileY; ty++) {
@@ -67,9 +67,9 @@ export function buildTileGrid({ bbox, width, height, padding, style, maptilerKey
         z: zTile,
         x: tx,
         y: ty,
-        url: `https://api.maptiler.com/maps/${style}/256/${zTile}/${tx}/${ty}.png?key=${maptilerKey}`,
-        px: tx * TILE_SIZE * tileScale - originWorldX,
-        py: ty * TILE_SIZE * tileScale - originWorldY,
+        url: `https://api.maptiler.com/maps/${style}/256/${zTile}/${tx}/${ty}@2x.png?key=${maptilerKey}`,
+        px: tx * tileStride - originWorldX,
+        py: ty * tileStride - originWorldY,
         size: renderedTileSize,
       });
     }
