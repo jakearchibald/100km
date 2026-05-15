@@ -114,14 +114,16 @@ function buildRoutePathAndCumPx(
   let prevY = 0;
   for (let i = 0; i < coords.length; i++) {
     const [lon, lat] = coords[i];
-    const { x, y } = grid.toPixel(lon, lat);
+    const raw = grid.toPixel(lon, lat);
+    // Round to match what we serialize into the SVG path so cumPx reflects
+    // the lengths SVG will actually traverse for stroke-dasharray.
+    const x = Math.round(raw.x * 10) / 10;
+    const y = Math.round(raw.y * 10) / 10;
     if (i === 0) {
       cumPx[0] = 0;
       d = `M${x.toFixed(1)},${y.toFixed(1)}`;
     } else {
-      const dx = x - prevX;
-      const dy = y - prevY;
-      acc += Math.hypot(dx, dy);
+      acc += Math.hypot(x - prevX, y - prevY);
       cumPx[i] = acc;
       d += `L${x.toFixed(1)},${y.toFixed(1)}`;
     }
