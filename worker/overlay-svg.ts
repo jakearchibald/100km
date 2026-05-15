@@ -71,9 +71,9 @@ function statsPanel(
 ): string {
   const x0 = 0;
   const w = PANEL_WIDTH;
-  const padX = 40;
+  const padX = 50;
   const blockSpacing = 168;
-  const baseY = (height - blockSpacing * 2) / 2 + 20;
+  const baseY = (height - blockSpacing * 2) / 2 + 10;
 
   function block(
     y: number,
@@ -83,14 +83,14 @@ function statsPanel(
   ): string {
     return (
       `<text x="${x0 + padX}" y="${y}" font-size="86" font-weight="700" fill="${valueColor}" font-family="Inter, sans-serif">${escapeXml(value)}</text>` +
-      `<text x="${x0 + padX}" y="${y + 38}" font-size="26" fill="${COLORS.textSecondary}" font-family="Inter, sans-serif" letter-spacing="2">${escapeXml(label.toUpperCase())}</text>`
+      `<text x="${x0 + padX}" y="${y + 45}" font-size="35" fill="${COLORS.textSecondary}" font-family="Inter, sans-serif" letter-spacing="2">${escapeXml(label.toUpperCase())}</text>`
     );
   }
 
   return (
     `<rect x="${x0}" y="0" width="${w}" height="${height}" fill="${COLORS.panelBg}"/>` +
     block(baseY, pct, 'complete') +
-    block(baseY + blockSpacing, time, 'walking') +
+    block(baseY + blockSpacing, time, 'walking time') +
     block(
       baseY + blockSpacing * 2,
       delta.text,

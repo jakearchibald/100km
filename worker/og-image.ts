@@ -9,7 +9,7 @@ import { buildOverlaySvg } from './overlay-svg.ts';
 
 const WIDTH = 1200;
 const HEIGHT = 630;
-const PANEL_WIDTH = 380;
+const PANEL_WIDTH = 450;
 const PADDING = 50;
 const TILE_STYLE = 'topo-v2';
 
@@ -133,6 +133,7 @@ export async function renderOgImage(req: Request, env: Env): Promise<Response> {
     centerAt: { x: PANEL_WIDTH + (WIDTH - PANEL_WIDTH) / 2, y: HEIGHT / 2 },
     style: TILE_STYLE,
     maptilerKey: env.VITE_MAPTILER_KEY,
+    zoomBias: 1,
   });
 
   const tileBuffers = await Promise.all(

@@ -30,14 +30,17 @@ interface BuildOptions {
   /** Width/height used for fitting the zoom level. Defaults to width/height. */
   fitWidth?: number;
   fitHeight?: number;
+  /** Subtracted from the integer tile zoom — higher values fetch lower-detail tiles scaled up. */
+  zoomBias?: number;
 }
 
-export function buildTileGrid({ bbox, width, height, padding, style, maptilerKey, centerAt, fitWidth, fitHeight }: BuildOptions): TileGrid {
+export function buildTileGrid({ bbox, width, height, padding, style, maptilerKey, centerAt, fitWidth, fitHeight, zoomBias = 0 }: BuildOptions): TileGrid {
   // Pick a fractional zoom that fits the bbox exactly in the usable area.
   const zFloat = exactFitZoom(bbox, fitWidth ?? width, fitHeight ?? height, padding);
   // @2x tiles are 512px covering the same ground as a 256px tile one zoom higher,
   // so fetch at ceil(zFloat) - 1 to get equivalent sharpness with 1/4 the requests.
-  const zTile = Math.min(18, Math.max(0, Math.ceil(zFloat) - 1));
+  // zoomBias drops the tile zoom further, producing simpler/blurrier maps that get scaled up.
+  const zTile = Math.min(18, Math.max(0, Math.ceil(zFloat) - 1 - zoomBias));
   const tileScale = 2 ** (zFloat - zTile);
   const renderedTileSize = TILE_SIZE * tileScale;
 
