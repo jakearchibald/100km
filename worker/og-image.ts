@@ -65,6 +65,11 @@ function formatPct(p: number): string {
 function formatDuration(sec: number): string {
   if (sec < 0) return '—';
   const total = Math.floor(sec);
+  if (total < 3600) {
+    const m = Math.floor(total / 60);
+    const s = total % 60;
+    return `${m}m ${s.toString().padStart(2, '0')}s`;
+  }
   const h = Math.floor(total / 3600);
   const m = Math.floor((total % 3600) / 60);
   return `${h}h ${m.toString().padStart(2, '0')}m`;
