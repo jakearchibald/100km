@@ -28,7 +28,7 @@ const showStatus = computed(() => status.value !== '');
 
 export function Overlay() {
   return (
-    <div className={styles.overlay}>
+    <div className={styles.overlay} data-overlay>
       {computed(() =>
         showStatus.value ? <div className={statusClass}>{status}</div> : null,
       )}

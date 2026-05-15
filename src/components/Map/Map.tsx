@@ -171,7 +171,12 @@ export function Map() {
       disposers.push(() => waypointPopup.remove());
 
       if (!stored) {
-        map.fitBounds(routeBounds(), { padding: 40, duration: 0 });
+        const overlayEl = document.querySelector<HTMLElement>('[data-overlay]');
+        const bottomPad = overlayEl ? Math.ceil(overlayEl.getBoundingClientRect().height) + 20 : 40;
+        map.fitBounds(routeBounds(), {
+          padding: { top: 40, right: 40, bottom: bottomPad, left: 40 },
+          duration: 0,
+        });
       }
 
       disposers.push(
