@@ -1,9 +1,10 @@
 import route from '../src/data/route-2026.ts';
 import historic from '../src/data/historic-chunk.ts';
 import { makeEquirect } from '../src/geo/distance.ts';
-import { projectOntoPolyline, type Projection } from '../src/geo/projection.ts';
+import { projectOntoPolyline } from '../src/geo/projection.ts';
 import { tAtDistance } from '../src/geo/search.ts';
 import { START_2026_MS } from '../data-config/start-2026.ts';
+import { cumPx, totalPx } from 'virtual:og-basemap';
 
 const eq = makeEquirect(route.midLat, route.midLon);
 const routeCoords =
@@ -12,13 +13,22 @@ const routeCoords =
     : [];
 
 export interface OgProjection {
-  userLat: number;
-  userLon: number;
-  proj: Projection;
   pctComplete: number;
   elapsedSec: number;
-  doneCoords: [number, number][];
+  doneLengthPx: number;
   delta2022Sec: number | null;
+}
+
+function pixelsAlongRoute(i: number, distM: number): number {
+  const dStart = route.cumDistM[i];
+  const dEnd = route.cumDistM[i + 1];
+  const pxStart = cumPx[i];
+  const pxEnd = cumPx[i + 1];
+  if (pxEnd === undefined || dEnd === undefined) return pxStart;
+  const segM = dEnd - dStart;
+  if (segM <= 0) return pxStart;
+  const f = (distM - dStart) / segM;
+  return pxStart + f * (pxEnd - pxStart);
 }
 
 export function computeProjection(
@@ -33,9 +43,10 @@ export function computeProjection(
   const pctComplete =
     elapsedSec < 0 ? 0 : pctRaw < 0 ? 0 : pctRaw > 1 ? 1 : pctRaw;
 
-  const doneCoords: [number, number][] = [];
-  for (let i = 0; i <= proj.i; i++) doneCoords.push(routeCoords[i]);
-  doneCoords.push([proj.lon, proj.lat]);
+  const doneLengthPx =
+    elapsedSec < 0
+      ? 0
+      : Math.max(0, Math.min(totalPx, pixelsAlongRoute(proj.i, proj.distM)));
 
   let delta2022Sec: number | null = null;
   if (elapsedSec >= 0) {
@@ -45,14 +56,9 @@ export function computeProjection(
   }
 
   return {
-    userLat: lat,
-    userLon: lon,
-    proj,
     pctComplete,
     elapsedSec,
-    doneCoords,
+    doneLengthPx,
     delta2022Sec,
   };
 }
-
-export { routeCoords };

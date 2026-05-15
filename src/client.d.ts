@@ -15,6 +15,13 @@ declare module '*.wasm' {
   export default wasm;
 }
 
+declare module 'virtual:og-basemap' {
+  export const basemapAssetPath: string;
+  export const routePath: string;
+  export const cumPx: number[];
+  export const totalPx: number;
+}
+
 interface ImportMetaEnv {
   readonly VITE_MAPTILER_KEY: string;
 }

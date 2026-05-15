@@ -2,16 +2,12 @@ import { initWasm, Resvg } from '@resvg/resvg-wasm';
 import resvgWasm from '@resvg/resvg-wasm/index_bg.wasm';
 import encodeJpeg, { init as initJpeg } from '@jsquash/jpeg/encode';
 import jpegWasm from '@jsquash/jpeg/codec/enc/mozjpeg_enc.wasm';
-import { bboxOf } from '../src/geo/web-mercator.ts';
-import { computeProjection, routeCoords } from './og-projection.ts';
-import { buildTileGrid } from './tile-grid.ts';
+import { basemapAssetPath } from 'virtual:og-basemap';
+import { computeProjection } from './og-projection.ts';
 import { buildOverlaySvg } from './overlay-svg.ts';
 
 const WIDTH = 1200;
 const HEIGHT = 630;
-const PANEL_WIDTH = 450;
-const PADDING = 50;
-const TILE_STYLE = 'topo-v2';
 
 let wasmReady: Promise<void> | null = null;
 function ensureWasm(): Promise<void> {
@@ -47,7 +43,20 @@ async function loadFonts(env: Env, origin: string): Promise<Uint8Array[]> {
   return fontsCache;
 }
 
-const routeBbox = bboxOf(routeCoords);
+let basemapDataUrlCache: string | null = null;
+async function loadBasemapDataUrl(
+  env: Env,
+  origin: string,
+): Promise<string> {
+  if (basemapDataUrlCache) return basemapDataUrlCache;
+  const res = await env.ASSETS.fetch(new Request(origin + basemapAssetPath));
+  if (!res.ok) throw new Error(`basemap fetch ${res.status}: ${basemapAssetPath}`);
+  const buf = new Uint8Array(await res.arrayBuffer());
+  let bin = '';
+  for (let i = 0; i < buf.length; i++) bin += String.fromCharCode(buf[i]);
+  basemapDataUrlCache = 'data:image/png;base64,' + btoa(bin);
+  return basemapDataUrlCache;
+}
 
 function formatPct(p: number): string {
   return `${Math.round(p * 100)}%`;
@@ -84,23 +93,6 @@ function formatDelta(deltaSec: number | null): DeltaInfo {
   };
 }
 
-function bufferToBase64(buf: Uint8Array): string {
-  let bin = '';
-  for (let i = 0; i < buf.length; i++) bin += String.fromCharCode(buf[i]);
-  return btoa(bin);
-}
-
-async function fetchTile(url: string): Promise<Uint8Array> {
-  const res = await fetch(url, {
-    cf: {
-      cacheTtl: 86400,
-      cacheEverything: true,
-    },
-  } as RequestInit);
-  if (!res.ok) throw new Error(`tile fetch ${res.status}: ${url}`);
-  return new Uint8Array(await res.arrayBuffer());
-}
-
 export async function renderOgImage(req: Request, env: Env): Promise<Response> {
   const url = new URL(req.url);
   const latStr = url.searchParams.get('lat');
@@ -123,40 +115,20 @@ export async function renderOgImage(req: Request, env: Env): Promise<Response> {
 
   const proj = computeProjection(lat, lon, tMs);
 
-  const grid = buildTileGrid({
-    bbox: routeBbox,
-    width: WIDTH,
-    height: HEIGHT,
-    fitWidth: WIDTH - PANEL_WIDTH,
-    fitHeight: HEIGHT,
-    padding: PADDING,
-    centerAt: { x: PANEL_WIDTH + (WIDTH - PANEL_WIDTH) / 2, y: HEIGHT / 2 },
-    style: TILE_STYLE,
-    maptilerKey: env.VITE_MAPTILER_KEY,
-    zoomBias: 1,
-  });
-
-  const tileBuffers = await Promise.all(
-    grid.tiles.map((t) => fetchTile(t.url)),
-  );
-  const tileDataUrls = tileBuffers.map(
-    (buf) => 'data:image/png;base64,' + bufferToBase64(buf),
-  );
+  const [basemapDataUrl, fonts] = await Promise.all([
+    loadBasemapDataUrl(env, url.origin),
+    loadFonts(env, url.origin),
+  ]);
 
   const svg = buildOverlaySvg({
-    width: WIDTH,
-    height: HEIGHT,
-    grid,
-    tileDataUrls,
-    fullRouteCoords: routeCoords,
-    doneCoords: proj.doneCoords,
+    basemapDataUrl,
+    doneLengthPx: proj.doneLengthPx,
     pctText: formatPct(proj.pctComplete),
     walkingTimeText: formatDuration(proj.elapsedSec),
     delta: formatDelta(proj.delta2022Sec),
   });
 
   await ensureWasm();
-  const fonts = await loadFonts(env, url.origin);
   const resvg = new Resvg(svg, {
     fitTo: { mode: 'width', value: WIDTH },
     font: {
@@ -185,4 +157,4 @@ export async function renderOgImage(req: Request, env: Env): Promise<Response> {
   });
 }
 
-export { formatPct, formatDuration, formatDelta };
+export { formatPct, formatDuration, formatDelta, HEIGHT, WIDTH };
