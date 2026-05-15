@@ -10,7 +10,7 @@ import {
   historic2022AtElapsed,
   route,
 } from '../../state/projection.ts';
-import { historic } from '../../state/signals.ts';
+import { historic, positionFromUrl, timeFromUrl } from '../../state/signals.ts';
 import {
   flyRequestId,
   flyTarget,
@@ -67,7 +67,8 @@ export function Map() {
 
   useEffect(() => {
     if (!containerRef.current) return;
-    const stored = readViewport();
+    const sharedMode = positionFromUrl.peek() && timeFromUrl.peek();
+    const stored = sharedMode ? null : readViewport();
     const map = new maplibregl.Map({
       container: containerRef.current,
       style: TILE_STYLE,
