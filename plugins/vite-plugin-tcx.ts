@@ -18,6 +18,13 @@ const FINISH_CLAMPS: Record<number, FinishClamp> = {
   2021: { lat: 50.829655377010624, lon: -0.11198652838670355, radiusM: 15 },
 };
 
+// Per-year start offsets in seconds. The recording was running before the real
+// start; drop trackpoints earlier than this and rebase t/d to 0.
+const START_SKIP_SEC: Record<number, number> = {
+  2021: 110,
+  2022: 10,
+};
+
 interface RawTrackpoint {
   Time?: string;
   Position?: {
@@ -54,11 +61,14 @@ function buildYearTrack(parsed: RawTcx, year: number): YearTrack {
   const clamp = FINISH_CLAMPS[year];
   const clampEq = clamp ? makeEquirect(clamp.lat, clamp.lon) : null;
   const clampR2 = clamp ? clamp.radiusM * clamp.radiusM : 0;
+  const skipSec = START_SKIP_SEC[year] ?? 0;
 
   const points: HistoricPoint[] = [];
   let lastDist = 0;
   let lastEmittedSec = -Infinity;
+  let rawStartMs: number | null = null;
   let startMs: number | null = null;
+  let distOffset = 0;
   let maxDist = 0;
   let lastPoint: HistoricPoint | null = null;
   let clampHit = false;
@@ -67,13 +77,12 @@ function buildYearTrack(parsed: RawTcx, year: number): YearTrack {
     if (!tp.Time) continue;
     const tMs = Date.parse(tp.Time);
     if (!Number.isFinite(tMs)) continue;
-    if (startMs === null) startMs = tMs;
+    if (rawStartMs === null) rawStartMs = tMs;
 
     if (tp.DistanceMeters !== undefined) {
       const d = parseFloat(tp.DistanceMeters);
       if (Number.isFinite(d)) {
         lastDist = d;
-        if (d > maxDist) maxDist = d;
       }
     }
 
@@ -83,8 +92,17 @@ function buildYearTrack(parsed: RawTcx, year: number): YearTrack {
     const lon = parseFloat(tp.Position.LongitudeDegrees);
     if (!Number.isFinite(lat) || !Number.isFinite(lon)) continue;
 
+    if ((tMs - rawStartMs!) / 1000 < skipSec) continue;
+    if (startMs === null) {
+      startMs = tMs;
+      distOffset = lastDist;
+    }
+
+    const adjDist = lastDist - distOffset;
+    if (adjDist > maxDist) maxDist = adjDist;
+
     const tSec = Math.round((tMs - startMs!) / 1000);
-    const point: HistoricPoint = { t: tSec, d: lastDist, lat, lon };
+    const point: HistoricPoint = { t: tSec, d: adjDist, lat, lon };
     lastPoint = point;
     if (tSec - lastEmittedSec >= RESAMPLE_SEC) {
       points.push(point);
@@ -97,7 +115,7 @@ function buildYearTrack(parsed: RawTcx, year: number): YearTrack {
         if (points.length === 0 || points[points.length - 1].t !== point.t) {
           points.push(point);
         }
-        maxDist = lastDist;
+        maxDist = adjDist;
         clampHit = true;
         break;
       }
